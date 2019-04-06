@@ -83,14 +83,10 @@ def backward(neural_net, input, output, target_output):
 	delta = [0]*num_layers
 	
 	layer_output = output[num_layers-1]
-	#delta[num_layers-1] = np.matmul(convert_vector_to_D(layer_output), (layer_output - t))
-	#gradient[num_layers-1] = layer_output * (1 - layer_output) * (target_output - layer_output)
 	delta[num_layers-1] = layer_output * (1 - layer_output) * (layer_output - t)
 
 	for i in range(num_layers-2, -1, -1):
 		layer_output = output[i]
-		#D = convert_vector_to_D(layer_output)
-		#delta[i] = np.matmul(D, np.matmul(neural_net[i+1][:-1,:], delta[i+1]))
 		delta[i] = layer_output * (1 - layer_output) * np.matmul(neural_net[i+1][:-1,:], delta[i+1])
 
 	for i in range(num_layers-1, 0, -1):
@@ -106,55 +102,42 @@ def backward(neural_net, input, output, target_output):
 
 	return gradient
 
-# returns : gradient for each parameter
-# ____________________
-# | ----  x1 ---------|
-# | ----  x2 ---------|
-# | ----  .. ---------|
-# |___________________|
-# ____________________   ________________
-# | ----  o1 ---------|  |-----o1--------|
-# | ----  o2 ---------|, |------o2-------|, ...
-# | ----  .. ---------|  |------..-------|
-# |___________________|  |_______________|
-# ____________________
-# | ----  y1 ---------|
-# | ----  y2 ---------|
-# | ----  .. ---------|
-# |___________________|
+def column(array, k):
+	c = array[:,k]
+	return c.reshape((len(c),1))
 
+# returns : gradient for each parameter
 def backward_multi(neural_net, input, output, target_output):
+	m = len(target_output)
 	t = target_output.T
-	#inp = np.reshape(input, (len(input), 1))
 	inp = np.hstack([input, np.ones((input.shape[0],1))]).T
 
 	num_layers = len(neural_net)
 	gradient = [0]*num_layers
+	gradient_list = []
 	delta = [0]*num_layers
 	
-	layer_output = output[num_layers-1].T
+	layer_output = output[num_layers-1]
 	delta[num_layers-1] = layer_output * (1 - layer_output) * (layer_output - t)
 
 	for i in range(num_layers-2, -1, -1):
-		layer_output = output[i].T
+		layer_output = output[i]
 		delta[i] = layer_output * (1 - layer_output) * np.matmul(neural_net[i+1][:-1,:], delta[i+1])
 
-	augmented_layer_output_multiple = np.hstack([output[0], np.ones((output[0].shape[0],1))]).T
-	
-	augmented_layer_output = augmented_layer_output_multiple[:,0].reshape((output[0].shape[1], 1))
-	for i in range(num_layers-1, 0, -1):
-		gradient[i] = np.matmul(augmented_layer_output, delta[i][:,0].reshape((delta[i].shape[0],1)).T)
-
-	augmented_layer_output = inp[:,k].reshape((inp.shape[0], 1))
-	gradient[0] = np.matmul(augmented_layer_output, delta[0][:,0].reshape((delta[i].shape[0],1)).T)
-
-	for k in range(1, augmented_layer_output_multiple.shape[1]):
-		augmented_layer_output = augmented_layer_output_multiple[:,k].reshape((output[0].shape[1], 1))
+	for k in range(m):
 		for i in range(num_layers-1, 0, -1):
-			gradient[i] += np.matmul(augmented_layer_output, delta[i][:,k].reshape((delta[i].shape[0],1)).T)
+			augmented_layer_output = np.vstack([column(output[i-1],k), [1]])
+			gradient[i] = np.matmul(augmented_layer_output, column(delta[i],k).T)
 
-		augmented_layer_output = inp[:,k].reshape((inp.shape[0], 1))
-		gradient[0] += np.matmul(augmented_layer_output, delta[0][:,k].reshape((delta[i].shape[0],1)).T)
+		augmented_layer_output = column(inp,k)
+		gradient[0] = np.matmul(augmented_layer_output, column(delta[0],k).T)
+
+		gradient_list.append(gradient)
+
+	gradient = gradient_list[0]
+	for i in range(1,m):
+		for j in range(len(neural_net)):
+			gradient[j] += gradient_list[i][j]
 
 	return gradient
 
@@ -260,13 +243,14 @@ input = [[1.0,1.0], [1.0,1.0]]
 print "****"
 a = forward_multi(n, input)
 print a
+
+n1 = train(n, input, [[0.0, 1.0], [0.0, 1.0]], 2, 0.1)
+print n1
 print 
 print "---------"
 print backward_multi(n, np.array(input), a, np.array([[0.0, 1.0], [0.0, 1.0]]))
 
-n1 = train(n, input, [[0.0, 1.0], [0.0, 1.0]], 2, 0.1)
-print n1
-print predict(n1, input[0])
+#print predict(n1, input[0])
 # o = forward(n, [[1,2],[1,3]])
 # print np.array(o)
 
