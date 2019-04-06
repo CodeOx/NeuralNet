@@ -107,7 +107,7 @@ def backward_multi(neural_net, input, output, target_output):
 	delta = [0]*num_layers
 	
 	layer_output = output[num_layers-1]
-	delta[num_layers-1] = layer_output * (1 - layer_output) * (layer_output - t)
+	delta[num_layers-1] = layer_output * (1 - layer_output) * (layer_output - t) * -1
 
 	for i in range(num_layers-2, -1, -1):
 		layer_output = output[i]
@@ -148,7 +148,7 @@ def getError(output, y):
 # input : neural network to train, x,y for training
 # returns : trained neural network
 def train(neural_net, x, y, batch_size, neta):
-	max_iterations = 100 	# max epochs
+	max_iterations = 500 	# max epochs
 	error_threshold = 0.00001
 
 	error_old = -1.0
@@ -231,10 +231,22 @@ def getAccuracy(Y_predict, Y_input):
 # print "---------"
 # print backward_multi(n, np.array(input), a, np.array([[0.0, 1.0], [0.0, 1.0]]))
 
-#print predict(n1, input[0])
+# print predict(n1, input[0])
 # o = forward(n, [[1,2],[1,3]])
 # print np.array(o)
 
+n = [np.array([[0.15,0.25], [0.20,0.30], [0.35,0.35]]), np.array([[0.40,0.50], [0.45,0.55], [0.60,0.60]])]
+y = [[0.01,0.99]]
+x = [[0.05,0.10]]
+print n
+o = forward_multi(n, x)
+print o
+b = backward_multi(n, np.array(x), o, np.array(y))
+print b 
+neta = 0.5
+neta_gradient = [neta*g for g in b]
+neural_net = [n-g for (n,g) in zip(n, neta_gradient)]
+print neural_net
 #################################
 # I/O ###########################
 
@@ -270,11 +282,17 @@ Y_Te = Y_Te.values
 #################################
 # running network  ##############
 
-net = create_network(85, [15], 10)
-trained_net = train(net, X_Tr, Y_Tr, 128, 0.1)
+# net = create_network(85, [20], 10)
+# trained_net = train(net, X_Tr, Y_Tr, 128, 0.1)
 
-Y_Tr_predict = predict_multi(trained_net, X_Tr)
-Y_Te_predict = predict_multi(trained_net, X_Te)
+# Y_Tr_predict = predict_multi(trained_net, X_Tr)
+# Y_Te_predict = predict_multi(trained_net, X_Te)
 
-print "Training accuracy = ", getAccuracy(Y_Tr_predict, Y_Tr)*100
-print "Testing accuracy = ", getAccuracy(Y_Te_predict, Y_Te)*100
+# print "Training accuracy = ", getAccuracy(Y_Tr_predict, Y_Tr)*100
+# print "Testing accuracy = ", getAccuracy(Y_Te_predict, Y_Te)*100
+
+# from sklearn.neural_network import MLPClassifier
+# clf = MLPClassifier(hidden_layer_sizes=(20,), activation='logistic', solver='sgd', alpha=0.0, batch_size=128, learning_rate_init=0.1, max_iter=500, tol=0, random_state=1, nesterovs_momentum=False)
+# print clf.get_params()
+# clf.fit(X_Tr, Y_Tr) 
+# print getAccuracy(clf.predict(X_Tr), Y_Tr)
