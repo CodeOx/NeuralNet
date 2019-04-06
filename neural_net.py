@@ -172,17 +172,16 @@ def train(neural_net, x, y, batch_size, neta):
 		for s in range(len(y)/batch_size):
 			start = s * batch_size
 			
-			output = forward(neural_net, x[start])
-			print output
-			net_gradient = backward(neural_net, x[start], output, y[start])
-			print net_gradient
-			print "<<<<<"
-			#output = forward_multi(neural_net, x[start:start+batch_size])
-			#net_gradient = backward_multi(neural_net, x[start:start+batch_size], output, y[start:start+batch_size])
+			#output = forward(neural_net, x[start])
+			#net_gradient = backward(neural_net, x[start], output, y[start])
+			output = forward_multi(neural_net, x[start:start+batch_size])
+			net_gradient = backward_multi(neural_net, x[start:start+batch_size], output, y[start:start+batch_size])
 
-			for j in range(1, batch_size):		
-				output = forward(neural_net, x[start + j])
-				net_gradient += backward(neural_net, x[start + j], output, y[start + j])
+			print net_gradient
+
+			# for j in range(1, batch_size):		
+			# 	output = forward(neural_net, x[start + j])
+			# 	net_gradient += backward(neural_net, x[start + j], output, y[start + j])
 
 			neta_gradient = [neta*g for g in net_gradient]
 			neural_net = [n-g for (n,g) in zip(neural_net, neta_gradient)]
@@ -244,7 +243,7 @@ print "****"
 a = forward_multi(n, input)
 print a
 
-n1 = train(n, input, [[0.0, 1.0], [0.0, 1.0]], 2, 0.1)
+n1 = train(n, np.array(input), np.array([[0.0, 1.0], [0.0, 1.0]]), 2, 0.1)
 print n1
 print 
 print "---------"
