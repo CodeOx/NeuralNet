@@ -98,7 +98,6 @@ def column(array, k):
 # returns : gradient for each parameter
 def backward_multi(neural_net, input, output, target_output):
 	m = len(target_output)
-	print m
 	t = target_output.T
 	inp = np.hstack([input, np.ones((input.shape[0],1))]).T
 
@@ -112,7 +111,7 @@ def backward_multi(neural_net, input, output, target_output):
 
 	for i in range(num_layers-2, -1, -1):
 		layer_output = output[i]
-		delta[i] = layer_output * (1 - layer_output) * np.matmul(neural_net[i+1][:-1,:], delta[i+1])
+		delta[i] = layer_output * (1 - layer_output) * np.matmul(neural_net[i+1][:-1,:], delta[i+1]) * -1
 
 	for k in range(m):
 		for i in range(num_layers-1, 0, -1):
@@ -134,34 +133,29 @@ def backward_multi(neural_net, input, output, target_output):
 
 	return sum_gradient
 
-def getError(neural_net, x, y):
+def getError(output, y):
 	error = 0.0
-	for k in range(len(y)):
-		input = x[k]
-		i = np.reshape(input, (len(input), 1))
-		layer_input = np.vstack([i, [1]]).T 		 	# transpose of input vector, 
+	y_inp = y.T
+	y_pred = output[len(output)-1].copy()
 
-		for w in neural_net:
-			layer_output = np.matmul(layer_input, w) 				# transpose of output vector
-			layer_output = sigmoid(layer_output)
-			layer_input = np.vstack([layer_output.T, [1]]).T		# append 1 for bias
+	y_err = y_inp - y_pred
+	error_list = y_err * y_err
+	error = np.sum(error_list)
 
-		for j in range(10):
-			error += (layer_output[0][j] - y[k][j])*(layer_output[0][j] - y[k][j])
-
-	return error/2.0
+	return error
 
 
 # input : neural network to train, x,y for training
 # returns : trained neural network
 def train(neural_net, x, y, batch_size, neta):
-	max_iterations = 10 	# max epochs
+	max_iterations = 100 	# max epochs
 	error_threshold = 0.00001
 
-	#error_old = getError(neural_net, x, y)
+	error_old = -1.0
 	it = 0 					# epochs
 	while(it < max_iterations):
 		it += 1
+		error_new = 0.0
 		for s in range(len(y)/batch_size):
 			start = s * batch_size
 			
@@ -171,10 +165,13 @@ def train(neural_net, x, y, batch_size, neta):
 			neta_gradient = [neta*g for g in net_gradient]
 			neural_net = [n-g for (n,g) in zip(neural_net, neta_gradient)]
 
-			#error_new = getError(neural_net, x[start:start+batch_size], y[start:start+batch_size])
-			#if (error_old - error_new < error_threshold) :
-				#return neural_net
-			#error_old = error_new	
+			error_new += getError(output, y[start:start+batch_size])
+
+		error_new /= len(y)
+		print error_new
+		#if (abs(error_old - error_new) < error_threshold and error_old >= 0.0) :
+		#	return neural_net
+		error_old = error_new	
 		print it
 
 	return neural_net
@@ -273,14 +270,11 @@ Y_Te = Y_Te.values
 #################################
 # running network  ##############
 
-net = create_network(85, [10], 10)
+net = create_network(85, [15], 10)
 trained_net = train(net, X_Tr, Y_Tr, 128, 0.1)
 
 Y_Tr_predict = predict_multi(trained_net, X_Tr)
-#Y_Te_predict = predict_multi(trained_net, X_Te)
-
-print Y_Tr_predict[0]
-print Y_Tr[0]
+Y_Te_predict = predict_multi(trained_net, X_Te)
 
 print "Training accuracy = ", getAccuracy(Y_Tr_predict, Y_Tr)*100
-#print "Testing accuracy = ", getAccuracy(Y_Te_predict, Y_Te)*100
+print "Testing accuracy = ", getAccuracy(Y_Te_predict, Y_Te)*100
