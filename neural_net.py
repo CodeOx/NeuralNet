@@ -69,7 +69,6 @@ def backward_multi(neural_net, input, output, target_output):
 	z = output[0].shape[1]
 	for i in range(num_layers-1, 0, -1):
 		augmented_layer_output = np.vstack([[1]*z, output[i-1]])
-		#gradient[i] = np.matmul(augmented_layer_output, delta[i].T)
 		gradient[i] = np.dot(delta[i],augmented_layer_output.T).T
 
 	augmented_layer_output = inp
@@ -159,15 +158,15 @@ def getAccuracy(Y_predict, Y_input):
 def accuracy(Y_inp, Y_pred):
 	count = 0
 	for i in range(len(Y_inp)):
-		if Y_inp[i] == Y_pred[i]:
+		if np.argmax(Y_inp[i]) == Y_pred[i]:
 			count += 1
 	return float(count)/len(Y_inp)
 
 #################################
 # I/O ###########################
 
-train_file = "F:/ml/A3/Q2/data/poker-hand-training-true.data"
-test_file = "F:/ml/A3/Q2/data/poker-hand-testing.data"
+train_file = "F:/ml/A3/Q2/data/poker-hand-training-true-processed.data"
+test_file = "F:/ml/A3/Q2/data/poker-hand-testing-processed-small.data"
 
 dfTr = pd.read_csv(train_file, header=None)
 dfTe = pd.read_csv(test_file, header=None)
@@ -184,37 +183,29 @@ dfTe = pd.read_csv(test_file, header=None)
 #################################
 # One hot encoding ##############
 
-X_Tr = dfTr.iloc[:,:10]
-X_Te = dfTe.iloc[:,:10]
-Y_Tr = dfTr.iloc[:,10:]
-Y_Te = dfTe.iloc[:,10:]
-
-X_combined = pd.concat([X_Tr,X_Te],keys=[0,1])
-X_combined = pd.get_dummies(X_combined, columns=[0,1,2,3,4,5,6,7,8,9])
-
-Y_combined = pd.concat([Y_Tr,Y_Te],keys=[0,1])
-Y_combined = pd.get_dummies(Y_combined, columns=[10])
-
-X_Tr, X_Te = X_combined.xs(0), X_combined.xs(1)
-Y_Tr, Y_Te = Y_combined.xs(0), Y_combined.xs(1)
-
-X_Tr = X_Tr.values
-X_Te = X_Te.values
-
-Y_Tr = Y_Tr.values
-Y_Te = Y_Te.values
+X_Tr = dfTr.iloc[:,:85].values
+X_Te = dfTe.iloc[:,:85].values
+Y_Tr = dfTr.iloc[:,85:].values
+Y_Te = dfTe.iloc[:,85:].values
 
 # Standardizing the data
-X_Tr = preprocessing.scale(X_Tr) 
+X_Tr = preprocessing.scale(X_Tr)
+X_Te = preprocessing.scale(X_Te)
 
 #################################
 # running network  ##############
 
-net = create_network(85, [25], 10)
+hl_units = [5, 10, 15, 20, 25]
+learning_rate = 0.1
+
+net = create_network(85, [10], 10)
 trained_net = train(net, X_Tr, Y_Tr, 100, 0.1)
 
 Y_Tr_predict = predict1(trained_net, X_Tr)
-#Y_Te_predict = predict1(trained_net, X_Te)
+# Y_Te_predict1 = predict1(trained_net, X_Te[:500000,:])
+# Y_Te_predict2 = predict1(trained_net, X_Te[500000:,:])
+# Y_Te_predict = np.concatenate((Y_Te_predict1, Y_Te_predict2), axis=0)
+Y_Te_predict = predict1(trained_net, X_Te)
 
-print "training accuracy = ", accuracy(dfTr.iloc[:,10:].values, Y_Tr_predict)
-#print "testing accuracy = ", accuracy(dfTe.iloc[:,10:].values, Y_Te_predict)
+print "training accuracy = ", accuracy(Y_Tr, Y_Tr_predict)
+print "testing accuracy = ", accuracy(Y_Te, Y_Te_predict)
