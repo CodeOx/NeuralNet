@@ -1,11 +1,20 @@
 import pandas as pd
+import sys
 
-train_file = "F:/ml/A3/Q2/data/poker-hand-training-true.data"
-test_file = "F:/ml/A3/Q2/data/poker-hand-testing.data"
+# train_file = "F:/ml/A3/Q2/data/poker-hand-training-true.data"
+# test_file = "F:/ml/A3/Q2/data/poker-hand-testing.data"
 
-train_save = "F:/ml/A3/Q2/data/poker-hand-training-true-processed.data"
-test_save = "F:/ml/A3/Q2/data/poker-hand-testing-processed.data"
-test_save = "F:/ml/A3/Q2/data/poker-hand-testing-processed-small.data"
+# train_save = "F:/ml/A3/Q2/data/poker-hand-training-true-processed.data"
+# test_save = "F:/ml/A3/Q2/data/poker-hand-testing-processed.data"
+# test_save_small = "F:/ml/A3/Q2/data/poker-hand-testing-processed-small.data"
+
+train_file = sys.argv[1]
+test_file = sys.argv[2]
+
+train_save = sys.argv[3]
+test_save = sys.argv[4]
+
+test_save_small = test_save + '.small'
 
 dfTr = pd.read_csv(train_file, header=None)
 dfTe = pd.read_csv(test_file, header=None)
