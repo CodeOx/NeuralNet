@@ -206,7 +206,7 @@ X_Te = preprocessing.scale(X_Te)
 #################################
 # running network  ##############
 
-part = 6
+part = 5
 
 # part (c)
 if part == 3:
